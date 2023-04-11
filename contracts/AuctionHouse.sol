@@ -5,15 +5,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
-/***
- * @TODO 
- *   1 - Contract  Withdraw  
- *   2  - Transfer 
- */
 
 contract AuctionHouse is Ownable, ReentrancyGuard {
-    event StartAuction(uint id);
-    event AuctionBird(address indexed sender, uint auction, uint amount);
+    event AuctionCreated(
+        uint256 indexed id,
+        uint256 startTime,
+        uint256 endTime
+    );
+    event AuctionBid(address indexed sender, uint auction, uint amount);
     event AuctionEnded(uint auction, address winner, uint amount);
 
     struct AuctionItem {
@@ -74,7 +73,7 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
             endAt
         );
 
-        emit StartAuction(id);
+        emit AuctionCreated(id, startAt, endAt);
     }
 
     function bidAuction(uint256 auctionID) external payable nonReentrant {
@@ -113,7 +112,7 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
         Bid memory bid = Bid(auctionID, msg.sender, msg.value, block.timestamp);
         bids.push(bid);
 
-        emit AuctionBird(msg.sender, auctionID, msg.value);
+        emit AuctionBid(msg.sender, auctionID, msg.value);
     }
 
     function getAuction(
@@ -140,11 +139,9 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
         auctionItem.ended = true;
         auctionItem.endAt = block.timestamp;
 
-
-        //transfer seller 
+        //transfer seller
         address payable payTo = payable(auctionItem.seller);
         payTo.transfer(auctionItem.winnerAmountBid);
-
 
         emit AuctionEnded(
             auctionID,
