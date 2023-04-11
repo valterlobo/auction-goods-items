@@ -249,12 +249,6 @@ describe("AuctionHouse", function () {
 
             let birdValueItem = ethers.utils.parseEther("0.0012");
 
-
-            let provider = ethers.provider
-
-            let birdBalanceBefore = await provider.getBalance(birdAccount.address)
-
-
             const txBird = await auctionHouse.connect(birdAccount).bidAuction(1, {
                 value: birdValueItem,
             })
@@ -268,7 +262,7 @@ describe("AuctionHouse", function () {
             })
 
             await expect(
-                auctionHouse.connect(owner).endAuction(1) 
+                auctionHouse.connect(owner).endAuction(1)
             ).to.be.revertedWith("Auction NOT already ended")
 
 
@@ -277,10 +271,16 @@ describe("AuctionHouse", function () {
             await time.increaseTo(newTimestamp)
 
 
-            await auctionHouse.connect(owner).endAuction(1) 
-
+            let provider = ethers.provider
 
             let lastAuctionItem = await auctionHouse.connect(owner).getAuction(1)
+
+            let sellerBalanceBefore = await provider.getBalance(lastAuctionItem[4])
+
+            await auctionHouse.connect(owner).endAuction(1)
+
+
+            lastAuctionItem = await auctionHouse.connect(owner).getAuction(1)
             //console.log("------")
             let lastTime = await time.latest()
             //console.log(lastAuctionItem)
@@ -288,6 +288,10 @@ describe("AuctionHouse", function () {
             expect(lastAuctionItem[7]).to.equal(birdNewValueItem)
             expect(lastAuctionItem[9]).to.equal(true)
             expect(lastAuctionItem[11]).to.equal(lastTime)
+
+
+            let sellerBalanceAfter = await provider.getBalance(lastAuctionItem[4])
+            expect(sellerBalanceAfter).to.equal(sellerBalanceBefore.add(lastAuctionItem[7]))
 
             /*
             let bids = await auctionHouse.connect(owner).getBid(1)

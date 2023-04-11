@@ -4,6 +4,13 @@ pragma solidity 0.8.18;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+
+/***
+ * @TODO 
+ *   1 - Contract  Withdraw  
+ *   2  - Transfer 
+ */
+
 contract AuctionHouse is Ownable, ReentrancyGuard {
     event StartAuction(uint id);
     event AuctionBird(address indexed sender, uint auction, uint amount);
@@ -132,6 +139,12 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
 
         auctionItem.ended = true;
         auctionItem.endAt = block.timestamp;
+
+
+        //transfer seller 
+        address payable payTo = payable(auctionItem.seller);
+        payTo.transfer(auctionItem.winnerAmountBid);
+
 
         emit AuctionEnded(
             auctionID,
