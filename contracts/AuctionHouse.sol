@@ -122,8 +122,7 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
         return bids;
     }
 
-    function endAuction(uint auctionID) external onlyOwner {
-        
+    function endAuction(uint auctionID) external nonReentrant onlyOwner {
         AuctionItem storage auctionItem = auctions[auctionID];
         require(auctionItem.codItem != 0, "AuctionItem NOT EXIST [ID]");
         require(
