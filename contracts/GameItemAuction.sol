@@ -3,18 +3,9 @@ pragma solidity 0.8.18;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
-/***
- * @TODO
- *   1 - Contract  Withdraw
- *   2  - Transfer  -ok
- * https://etherscan.io/address/0x830bd73e4184cef73443c15111a1df14e495c706#writeProxyContract
- * https://etherscan.io/address/0xf15a943787014461d94da08ad4040f79cd7c124e#code
- * https://nouns.wtf/noun/654
- *
- */
-
-contract AuctionHouse is Ownable, ReentrancyGuard {
+contract GameItemAuction is Ownable, ReentrancyGuard {
     event AuctionCreated(
         uint256 indexed id,
         uint256 startTime,
@@ -25,11 +16,9 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
 
     struct AuctionItem {
         uint256 id;
-        string name;
-        string description;
         uint codItem;
         address seller;
-        uint256 sellerMinBid;
+        uint256 incrementBidAmount;
         address winnerBuyBid;
         uint256 winnerAmountBid;
         bool started;
@@ -47,32 +36,30 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
 
     mapping(uint => AuctionItem) public auctions;
 
-    mapping(uint => Bid[]) public auctionsBids; // id actions -> bids
+    mapping(uint => Bid[]) public auctionsBids; //id actions -> bids
+
+    using Counters for Counters.Counter;
+    Counters.Counter private counterIds;
 
     function startAuction(
-        uint256 id,
-        string memory name,
-        string memory description,
         uint codItem,
         address seller,
-        uint256 sellerMinBid,
-        uint startAt,
-        uint endAt
-    ) external onlyOwner {
-        AuctionItem storage auctionItem = auctions[id];
-        require(auctionItem.codItem == 0, "AuctionItem EXIST [ID]");
-        require(
-            startAt < endAt,
-            "AuctionItem endAt must be greater than the startAt"
-        );
+        uint256 incrementBidAmount,
+        uint qtdDays
+    ) external onlyOwner returns (uint256) {
+        require(qtdDays > 0, "AuctionItem qtdDays must be greater than zero");
 
-        auctions[id] = AuctionItem(
-            id,
-            name,
-            description,
+        counterIds.increment();
+        uint256 newID = counterIds.current();
+
+        uint startAt = block.timestamp;
+        uint endAt = startAt + qtdDays * 1 days;
+
+        auctions[newID] = AuctionItem(
+            newID,
             codItem,
             seller,
-            sellerMinBid,
+            incrementBidAmount,
             address(0),
             0,
             true,
@@ -81,16 +68,14 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
             endAt
         );
 
-        emit AuctionCreated(id, startAt, endAt);
+        emit AuctionCreated(newID, startAt, endAt);
+
+        return newID;
     }
 
     function bidAuction(uint256 auctionID) external payable nonReentrant {
         AuctionItem storage auctionItem = auctions[auctionID];
         require(auctionItem.codItem != 0, "AuctionItem NOT EXIST [ID]");
-        require(
-            auctionItem.sellerMinBid < msg.value,
-            "Value not accepted - must be greater than the minimum bid"
-        );
 
         require(
             auctionItem.winnerAmountBid < msg.value,
