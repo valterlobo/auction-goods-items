@@ -145,21 +145,18 @@ describe("GameItemAuction", function () {
 
             await auctionHouse.startAuction(10, sellerAccount.address, 0, 1)
 
-            /*
             let birdValueItem = ethers.utils.parseEther("0.0012");
 
-
-            auctionHouse.bidAuction(1, {
-                value: birdValueItem,
-            })
+            var dateOffset = (24 * 60 * 60 * 1000) * 1 //1 days
+            let t = await time.latest()
+            let newTimestamp = t + dateOffset
+            await time.increaseTo(newTimestamp)
 
             await expect(
                 auctionHouse.connect(birdAccount).bidAuction(1, {
                     value: birdValueItem,
                 })
-            ).to.be.revertedWith("???")
-
-            */
+            ).to.be.revertedWith("Auction already ended")
 
         });
 
@@ -199,11 +196,8 @@ describe("GameItemAuction", function () {
                 auctionHouse.connect(owner).endAuction(1)
             ).to.be.revertedWith("Auction NOT already ended")
 
-
-
             let newTimestamp = t + dateOffset
             await time.increaseTo(newTimestamp)
-
 
             let provider = ethers.provider
 
