@@ -12,7 +12,7 @@ contract GameItemAuction is Ownable, ReentrancyGuard {
         uint256 endTime
     );
     event AuctionBid(address indexed sender, uint auction, uint amount);
-    event AuctionEnded(uint auction, address winner, uint amount);
+    event AuctionEnded(uint auction, address winner, uint amount); //cod item acresentar
 
     struct AuctionItem {
         uint256 id;
@@ -25,6 +25,7 @@ contract GameItemAuction is Ownable, ReentrancyGuard {
         bool ended;
         uint startAt;
         uint endAt;
+        uint qtdDays;
     }
 
     struct Bid {
@@ -38,16 +39,43 @@ contract GameItemAuction is Ownable, ReentrancyGuard {
 
     mapping(uint => Bid[]) public auctionsBids; //id actions -> bids
 
+    AuctionItem public currentAuctionItem;
+
     using Counters for Counters.Counter;
     Counters.Counter private counterIds;
 
-    function startAuction(
+    //startAuction(, seller, incrementBidAmount, qtdDays);
+    //startNextAuction -
+    //finishAuction
+
+    /*constructor() public {
+        auctions[0] = AuctionItem(
+            0,
+            0,
+            address(0),
+            0,
+            address(0),
+            0,
+            false,
+            false,
+            0,
+            0,
+            0
+        );
+        //auctionsBids[0][0] = Bid(0, address(0), 0, 0);
+    }*/
+
+    function addAuction(
         uint codItem,
         address seller,
         uint256 incrementBidAmount,
         uint qtdDays
-    ) external onlyOwner returns (uint256) {
+    ) public onlyOwner returns (uint256) {
         require(qtdDays > 0, "AuctionItem qtdDays must be greater than zero");
+        require(
+                block.timestamp > currentAuctionItem.endAt,
+            "Current auction NOT already ended"
+        );
 
         counterIds.increment();
         uint256 newID = counterIds.current();
@@ -65,8 +93,11 @@ contract GameItemAuction is Ownable, ReentrancyGuard {
             true,
             false,
             startAt,
-            endAt
+            endAt,
+            qtdDays
         );
+
+        currentAuctionItem = auctions[newID];
 
         emit AuctionCreated(newID, startAt, endAt);
 
@@ -112,7 +143,6 @@ contract GameItemAuction is Ownable, ReentrancyGuard {
         uint auctionID
     ) external view returns (AuctionItem memory) {
         AuctionItem memory auctionItem = auctions[auctionID];
-
         return auctionItem;
     }
 
@@ -121,7 +151,7 @@ contract GameItemAuction is Ownable, ReentrancyGuard {
         return bids;
     }
 
-    function endAuction(uint auctionID) external nonReentrant onlyOwner {
+    function endAuction(uint auctionID) public onlyOwner {
         AuctionItem storage auctionItem = auctions[auctionID];
         require(auctionItem.codItem != 0, "AuctionItem NOT EXIST [ID]");
         require(
@@ -140,6 +170,17 @@ contract GameItemAuction is Ownable, ReentrancyGuard {
             auctionID,
             auctionItem.winnerBuyBid,
             auctionItem.winnerAmountBid
+        );
+    }
+
+    function startNextAuction() public nonReentrant onlyOwner {
+        uint256 codItem = 100; //generateCodItem();
+        endAuction(currentAuctionItem.id);
+        addAuction(
+            codItem,
+            currentAuctionItem.seller,
+            currentAuctionItem.incrementBidAmount,
+            currentAuctionItem.qtdDays
         );
     }
 }

@@ -49,6 +49,24 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
 
     mapping(uint => Bid[]) public auctionsBids; // id actions -> bids
 
+    /*constructor() public {
+        auctions[0] = AuctionItem(
+            0,
+            "name",
+            "description",
+            0,
+            address(0),
+            0,
+            address(0),
+            0,
+            true,
+            false,
+            0,
+            0
+        );
+        auctionsBids[0][0] = Bid(0, address(0), 0, 0);
+    }*/
+
     function startAuction(
         uint256 id,
         string memory name,

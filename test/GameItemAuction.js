@@ -32,13 +32,13 @@ describe("GameItemAuction", function () {
     });
 
 
-    describe("startAuction", function () {
+    describe("addAuction", function () {
 
-        it("startAuction", async function () {
+        it("addAuction", async function () {
 
             const { auctionHouse, owner, sellerAccount, birdAccount } = await loadFixture(deployContract)
 
-            await auctionHouse.startAuction(10, sellerAccount.address, 0, 1)
+            await auctionHouse.addAuction(10, sellerAccount.address, 0, 1)
             let auctionInfo = await auctionHouse.getAuction(1)
 
             expect(auctionInfo[0]).to.equal(1)
@@ -56,7 +56,7 @@ describe("GameItemAuction", function () {
 
             const { auctionHouse, owner, sellerAccount, birdAccount } = await loadFixture(deployContract)
 
-            await auctionHouse.startAuction(10, sellerAccount.address, 0, 1)
+            await auctionHouse.addAuction(10, sellerAccount.address, 0, 1)
 
             let birdValueItem = ethers.utils.parseEther("0.0012");
 
@@ -103,7 +103,7 @@ describe("GameItemAuction", function () {
             const { auctionHouse, owner, sellerAccount, birdAccount } = await loadFixture(deployContract)
 
             let valueItem = ethers.utils.parseEther("0.001");
-            await auctionHouse.startAuction(10, sellerAccount.address, 0, 1)
+            await auctionHouse.addAuction(10, sellerAccount.address, 0, 1)
 
             await expect(
                 auctionHouse.connect(birdAccount).bidAuction(10, {
@@ -121,7 +121,7 @@ describe("GameItemAuction", function () {
 
             let valueItem = ethers.utils.parseEther("0.001");
 
-            await auctionHouse.startAuction(10, sellerAccount.address, 0, 1)
+            await auctionHouse.addAuction(10, sellerAccount.address, 0, 1)
 
             let birdValueItem = ethers.utils.parseEther("0.0012");
 
@@ -143,7 +143,7 @@ describe("GameItemAuction", function () {
 
             const { auctionHouse, owner, sellerAccount, birdAccount } = await loadFixture(deployContract)
 
-            await auctionHouse.startAuction(10, sellerAccount.address, 0, 1)
+            await auctionHouse.addAuction(10, sellerAccount.address, 0, 1)
 
             let birdValueItem = ethers.utils.parseEther("0.0012");
 
@@ -176,7 +176,7 @@ describe("GameItemAuction", function () {
             var dateOffset = (24 * 60 * 60 * 1000) * 1 //1 days
 
 
-            await auctionHouse.startAuction(10, sellerAccount.address, 0, 1)
+            await auctionHouse.addAuction(10, sellerAccount.address, 0, 1)
 
             let birdValueItem = ethers.utils.parseEther("0.0012");
 
@@ -233,6 +233,39 @@ describe("GameItemAuction", function () {
 
             let bids = await auctionHouse.connect(owner).getBid(1)
             //console.log(bids)
+
+
+        });
+
+    });
+
+
+
+    describe("startNextAuction", function () {
+
+        it("startNextAuction", async function () {
+
+            const { auctionHouse, owner, otherAccount } = await loadFixture(deployContract)
+
+
+            await auctionHouse.addAuction(10, owner.address, 0, 1)
+
+            let currentAuction = await auctionHouse.currentAuctionItem()
+            //console.log(currentAuction)
+            var dateOffset = (24 * 60 * 60 * 1000) * currentAuction.qtdDays //1 days
+
+            let t = await time.latest()
+            let newTimestamp = t + dateOffset
+            await time.increaseTo(newTimestamp)
+
+            await auctionHouse.startNextAuction()
+
+            let auction = await auctionHouse.connect(owner).getAuction(2)
+            //console.log(auction)
+            expect(currentAuction.seller).to.equal(auction.seller)
+            expect(currentAuction.incrementBidAmount).to.equal(auction.incrementBidAmount)
+            expect(currentAuction.qtdDays).to.equal(auction.qtdDays)
+
 
 
         });
